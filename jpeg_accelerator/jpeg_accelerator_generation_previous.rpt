@@ -1,0 +1,59 @@
+Info: Starting: Create block symbol file (.bsf)
+Info: qsys-generate C:\intelFPGA_lite\18.1\projects\jpeg_accelerator\jpeg_accelerator.qsys --block-symbol-file --output-directory=C:\intelFPGA_lite\18.1\projects\jpeg_accelerator\jpeg_accelerator --family="Cyclone V" --part=5CSXFC6D6F31C6
+Progress: Loading jpeg_accelerator/jpeg_accelerator.qsys
+Progress: Reading input file
+Progress: Adding CLOCK [clock_source 18.1]
+Progress: Parameterizing module CLOCK
+Progress: Adding DEBUG [altera_avalon_jtag_uart 18.1]
+Progress: Parameterizing module DEBUG
+Progress: Adding NIOS_II [altera_nios2_gen2 18.1]
+Progress: Parameterizing module NIOS_II
+Progress: Adding SRAM [altera_avalon_onchip_memory2 18.1]
+Progress: Parameterizing module SRAM
+Progress: Adding accelerator [jpeg_accelerator 1.0]
+Progress: Parameterizing module accelerator
+Progress: Adding timer_0 [altera_avalon_timer 18.1]
+Progress: Parameterizing module timer_0
+Progress: Building connections
+Progress: Parameterizing connections
+Progress: Validating
+Progress: Done reading input file
+Info: jpeg_accelerator.DEBUG: JTAG UART IP input clock need to be at least double (2x) the operating frequency of JTAG TCK on board
+Info: jpeg_accelerator.accelerator.DEBUG: JTAG UART IP input clock need to be at least double (2x) the operating frequency of JTAG TCK on board
+Error: jpeg_accelerator.accelerator.accelerator: Component jpeg_accelerator 1.0 not found or could not be instantiated
+Error: jpeg_accelerator.NIOS_II.data_master/accelerator.avalon_slave_0: Missing connection end (try "Remove Dangling Connections")
+Error: jpeg_accelerator.CLOCK.clk/accelerator.clock_sink: Missing connection end (try "Remove Dangling Connections")
+Error: jpeg_accelerator.CLOCK.clk_reset/accelerator.reset_sink: Missing connection end (try "Remove Dangling Connections")
+Error: jpeg_accelerator.accelerator: accelerator.clk must be connected to a clock output
+Info: qsys-generate succeeded.
+Info: Finished: Create block symbol file (.bsf)
+Info: 
+Info: Starting: Create HDL design files for synthesis
+Info: qsys-generate C:\intelFPGA_lite\18.1\projects\jpeg_accelerator\jpeg_accelerator.qsys --synthesis=VERILOG --output-directory=C:\intelFPGA_lite\18.1\projects\jpeg_accelerator\jpeg_accelerator\synthesis --family="Cyclone V" --part=5CSXFC6D6F31C6
+Progress: Loading jpeg_accelerator/jpeg_accelerator.qsys
+Progress: Reading input file
+Progress: Adding CLOCK [clock_source 18.1]
+Progress: Parameterizing module CLOCK
+Progress: Adding DEBUG [altera_avalon_jtag_uart 18.1]
+Progress: Parameterizing module DEBUG
+Progress: Adding NIOS_II [altera_nios2_gen2 18.1]
+Progress: Parameterizing module NIOS_II
+Progress: Adding SRAM [altera_avalon_onchip_memory2 18.1]
+Progress: Parameterizing module SRAM
+Progress: Adding accelerator [jpeg_accelerator 1.0]
+Progress: Parameterizing module accelerator
+Progress: Adding timer_0 [altera_avalon_timer 18.1]
+Progress: Parameterizing module timer_0
+Progress: Building connections
+Progress: Parameterizing connections
+Progress: Validating
+Progress: Done reading input file
+Info: jpeg_accelerator.DEBUG: JTAG UART IP input clock need to be at least double (2x) the operating frequency of JTAG TCK on board
+Info: jpeg_accelerator.accelerator.DEBUG: JTAG UART IP input clock need to be at least double (2x) the operating frequency of JTAG TCK on board
+Error: jpeg_accelerator.accelerator.accelerator: Component jpeg_accelerator 1.0 not found or could not be instantiated
+Error: jpeg_accelerator.NIOS_II.data_master/accelerator.avalon_slave_0: Missing connection end (try "Remove Dangling Connections")
+Error: jpeg_accelerator.CLOCK.clk/accelerator.clock_sink: Missing connection end (try "Remove Dangling Connections")
+Error: jpeg_accelerator.CLOCK.clk_reset/accelerator.reset_sink: Missing connection end (try "Remove Dangling Connections")
+Error: jpeg_accelerator.accelerator: accelerator.clk must be connected to a clock output
+Info: jpeg_accelerator: Generating jpeg_accelerator "jpeg_accelerator" for QUARTUS_SYNTH
+Error: null
