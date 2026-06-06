@@ -1,0 +1,20 @@
+# # File gsaved with Nlview version 6.3.8  2013-12-19 bk=1.2992 VDI=34 GEI=35
+# 
+preplace inst jpeg_accelerator.SRAM -pg 1 -lvl 2 -y 130
+preplace inst jpeg_accelerator.CLOCK -pg 1 -lvl 2 -y 430
+preplace inst jpeg_accelerator.NIOS_II.reset_bridge -pg 1
+preplace inst jpeg_accelerator.NIOS_II.cpu -pg 1
+preplace inst jpeg_accelerator.accelerator_0 -pg 1 -lvl 2 -y 310
+preplace inst jpeg_accelerator.DEBUG -pg 1 -lvl 2 -y 30
+preplace inst jpeg_accelerator.NIOS_II -pg 1 -lvl 1 -y 250
+preplace inst jpeg_accelerator -pg 1 -lvl 1 -y 40 -regy -20
+preplace inst jpeg_accelerator.timer_0 -pg 1 -lvl 2 -y 210
+preplace inst jpeg_accelerator.NIOS_II.clock_bridge -pg 1
+preplace netloc POINT_TO_POINT<net_container>jpeg_accelerator</net_container>(MASTER)NIOS_II.debug_reset_request,(SLAVE)CLOCK.clk_in_reset) 1 1 1 440
+preplace netloc FAN_OUT<net_container>jpeg_accelerator</net_container>(SLAVE)accelerator_0.clock_sink,(SLAVE)SRAM.clk1,(SLAVE)timer_0.clk,(MASTER)CLOCK.clk,(SLAVE)NIOS_II.clk,(SLAVE)DEBUG.clk) 1 0 3 80 210 520 400 740
+preplace netloc EXPORT<net_container>jpeg_accelerator</net_container>(SLAVE)jpeg_accelerator.clk,(SLAVE)CLOCK.clk_in) 1 0 2 NJ 440 NJ
+preplace netloc FAN_OUT<net_container>jpeg_accelerator</net_container>(SLAVE)DEBUG.irq,(MASTER)NIOS_II.irq,(SLAVE)timer_0.irq) 1 1 1 500
+preplace netloc INTERCONNECT<net_container>jpeg_accelerator</net_container>(MASTER)NIOS_II.data_master,(SLAVE)NIOS_II.debug_mem_slave,(SLAVE)DEBUG.avalon_jtag_slave,(SLAVE)accelerator_0.avalon_slave_0,(SLAVE)SRAM.s1,(MASTER)NIOS_II.instruction_master,(SLAVE)timer_0.s1) 1 0 2 60 190 480
+preplace netloc FAN_OUT<net_container>jpeg_accelerator</net_container>(MASTER)CLOCK.clk_reset,(SLAVE)accelerator_0.reset_sink,(SLAVE)SRAM.reset1,(SLAVE)NIOS_II.reset,(SLAVE)DEBUG.reset,(SLAVE)timer_0.reset) 1 0 3 80 390 460 420 720
+levelinfo -pg 1 0 30 780
+levelinfo -hier jpeg_accelerator 40 200 550 760

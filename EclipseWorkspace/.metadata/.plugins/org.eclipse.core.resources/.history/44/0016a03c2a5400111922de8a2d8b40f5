@@ -1,0 +1,14 @@
+#include <stdio.h>
+#include "sky_image_200.h"
+int main()
+{
+    printf("Hello from Nios II!\n");
+    int x = sky_image_200[1][1];
+    printf("%d", sx);
+    while (1)
+    {
+        // keep running
+    }
+
+    return 0;
+}

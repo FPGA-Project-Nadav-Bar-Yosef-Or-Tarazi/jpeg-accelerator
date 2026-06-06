@@ -1,0 +1,108 @@
+Info: Starting: Create block symbol file (.bsf)
+Info: qsys-generate C:\intelFPGA_lite\18.1\projects\jpeg_accelerator\jpeg_accelerator.qsys --block-symbol-file --output-directory=C:\intelFPGA_lite\18.1\projects\jpeg_accelerator\jpeg_accelerator --family="Cyclone V" --part=5CSXFC6D6F31C6
+Progress: Loading jpeg_accelerator/jpeg_accelerator.qsys
+Progress: Reading input file
+Progress: Adding CLOCK [clock_source 18.1]
+Progress: Parameterizing module CLOCK
+Progress: Adding DEBUG [altera_avalon_jtag_uart 18.1]
+Progress: Parameterizing module DEBUG
+Progress: Adding NIOS_II [altera_nios2_gen2 18.1]
+Progress: Parameterizing module NIOS_II
+Progress: Adding SRAM [altera_avalon_onchip_memory2 18.1]
+Progress: Parameterizing module SRAM
+Progress: Adding accelerator_0 [accelerator 1.0]
+Progress: Parameterizing module accelerator_0
+Progress: Adding timer_0 [altera_avalon_timer 18.1]
+Progress: Parameterizing module timer_0
+Progress: Building connections
+Progress: Parameterizing connections
+Progress: Validating
+Progress: Done reading input file
+Info: jpeg_accelerator.DEBUG: JTAG UART IP input clock need to be at least double (2x) the operating frequency of JTAG TCK on board
+Info: qsys-generate succeeded.
+Info: Finished: Create block symbol file (.bsf)
+Info: 
+Info: Starting: Create HDL design files for synthesis
+Info: qsys-generate C:\intelFPGA_lite\18.1\projects\jpeg_accelerator\jpeg_accelerator.qsys --synthesis=VERILOG --output-directory=C:\intelFPGA_lite\18.1\projects\jpeg_accelerator\jpeg_accelerator\synthesis --family="Cyclone V" --part=5CSXFC6D6F31C6
+Progress: Loading jpeg_accelerator/jpeg_accelerator.qsys
+Progress: Reading input file
+Progress: Adding CLOCK [clock_source 18.1]
+Progress: Parameterizing module CLOCK
+Progress: Adding DEBUG [altera_avalon_jtag_uart 18.1]
+Progress: Parameterizing module DEBUG
+Progress: Adding NIOS_II [altera_nios2_gen2 18.1]
+Progress: Parameterizing module NIOS_II
+Progress: Adding SRAM [altera_avalon_onchip_memory2 18.1]
+Progress: Parameterizing module SRAM
+Progress: Adding accelerator_0 [accelerator 1.0]
+Progress: Parameterizing module accelerator_0
+Progress: Adding timer_0 [altera_avalon_timer 18.1]
+Progress: Parameterizing module timer_0
+Progress: Building connections
+Progress: Parameterizing connections
+Progress: Validating
+Progress: Done reading input file
+Info: jpeg_accelerator.DEBUG: JTAG UART IP input clock need to be at least double (2x) the operating frequency of JTAG TCK on board
+Info: jpeg_accelerator: Generating jpeg_accelerator "jpeg_accelerator" for QUARTUS_SYNTH
+Info: DEBUG: Starting RTL generation for module 'jpeg_accelerator_DEBUG'
+Info: DEBUG:   Generation command is [exec C:/intelfpga_lite/18.1/quartus/bin64/perl/bin/perl.exe -I C:/intelfpga_lite/18.1/quartus/bin64/perl/lib -I C:/intelfpga_lite/18.1/quartus/sopc_builder/bin/europa -I C:/intelfpga_lite/18.1/quartus/sopc_builder/bin/perl_lib -I C:/intelfpga_lite/18.1/quartus/sopc_builder/bin -I C:/intelfpga_lite/18.1/quartus/../ip/altera/sopc_builder_ip/common -I C:/intelfpga_lite/18.1/quartus/../ip/altera/sopc_builder_ip/altera_avalon_jtag_uart -- C:/intelfpga_lite/18.1/quartus/../ip/altera/sopc_builder_ip/altera_avalon_jtag_uart/generate_rtl.pl --name=jpeg_accelerator_DEBUG --dir=C:/Users/ortar/AppData/Local/Temp/alt0607_3189425359275181211.dir/0004_DEBUG_gen/ --quartus_dir=C:/intelfpga_lite/18.1/quartus --verilog --config=C:/Users/ortar/AppData/Local/Temp/alt0607_3189425359275181211.dir/0004_DEBUG_gen//jpeg_accelerator_DEBUG_component_configuration.pl  --do_build_sim=0  ]
+Info: DEBUG: Done RTL generation for module 'jpeg_accelerator_DEBUG'
+Info: DEBUG: "jpeg_accelerator" instantiated altera_avalon_jtag_uart "DEBUG"
+Info: NIOS_II: "jpeg_accelerator" instantiated altera_nios2_gen2 "NIOS_II"
+Info: SRAM: Starting RTL generation for module 'jpeg_accelerator_SRAM'
+Info: SRAM:   Generation command is [exec C:/intelfpga_lite/18.1/quartus/bin64/perl/bin/perl.exe -I C:/intelfpga_lite/18.1/quartus/bin64/perl/lib -I C:/intelfpga_lite/18.1/quartus/sopc_builder/bin/europa -I C:/intelfpga_lite/18.1/quartus/sopc_builder/bin/perl_lib -I C:/intelfpga_lite/18.1/quartus/sopc_builder/bin -I C:/intelfpga_lite/18.1/quartus/../ip/altera/sopc_builder_ip/common -I C:/intelfpga_lite/18.1/quartus/../ip/altera/sopc_builder_ip/altera_avalon_onchip_memory2 -- C:/intelfpga_lite/18.1/quartus/../ip/altera/sopc_builder_ip/altera_avalon_onchip_memory2/generate_rtl.pl --name=jpeg_accelerator_SRAM --dir=C:/Users/ortar/AppData/Local/Temp/alt0607_3189425359275181211.dir/0005_SRAM_gen/ --quartus_dir=C:/intelfpga_lite/18.1/quartus --verilog --config=C:/Users/ortar/AppData/Local/Temp/alt0607_3189425359275181211.dir/0005_SRAM_gen//jpeg_accelerator_SRAM_component_configuration.pl  --do_build_sim=0  ]
+Info: SRAM: Done RTL generation for module 'jpeg_accelerator_SRAM'
+Info: SRAM: "jpeg_accelerator" instantiated altera_avalon_onchip_memory2 "SRAM"
+Info: accelerator_0: "jpeg_accelerator" instantiated accelerator "accelerator_0"
+Info: timer_0: Starting RTL generation for module 'jpeg_accelerator_timer_0'
+Info: timer_0:   Generation command is [exec C:/intelFPGA_lite/18.1/quartus/bin64//perl/bin/perl.exe -I C:/intelFPGA_lite/18.1/quartus/bin64//perl/lib -I C:/intelfpga_lite/18.1/quartus/sopc_builder/bin/europa -I C:/intelfpga_lite/18.1/quartus/sopc_builder/bin/perl_lib -I C:/intelfpga_lite/18.1/quartus/sopc_builder/bin -I C:/intelfpga_lite/18.1/quartus/../ip/altera/sopc_builder_ip/common -I C:/intelfpga_lite/18.1/quartus/../ip/altera/sopc_builder_ip/altera_avalon_timer -- C:/intelfpga_lite/18.1/quartus/../ip/altera/sopc_builder_ip/altera_avalon_timer/generate_rtl.pl --name=jpeg_accelerator_timer_0 --dir=C:/Users/ortar/AppData/Local/Temp/alt0607_3189425359275181211.dir/0007_timer_0_gen/ --quartus_dir=C:/intelfpga_lite/18.1/quartus --verilog --config=C:/Users/ortar/AppData/Local/Temp/alt0607_3189425359275181211.dir/0007_timer_0_gen//jpeg_accelerator_timer_0_component_configuration.pl  --do_build_sim=0  ]
+Info: timer_0: Done RTL generation for module 'jpeg_accelerator_timer_0'
+Info: timer_0: "jpeg_accelerator" instantiated altera_avalon_timer "timer_0"
+Info: avalon_st_adapter: Inserting error_adapter: error_adapter_0
+Info: avalon_st_adapter_001: Inserting error_adapter: error_adapter_0
+Info: avalon_st_adapter_002: Inserting error_adapter: error_adapter_0
+Info: avalon_st_adapter_003: Inserting error_adapter: error_adapter_0
+Info: avalon_st_adapter_004: Inserting error_adapter: error_adapter_0
+Info: mm_interconnect_0: "jpeg_accelerator" instantiated altera_mm_interconnect "mm_interconnect_0"
+Info: irq_mapper: "jpeg_accelerator" instantiated altera_irq_mapper "irq_mapper"
+Info: rst_controller: "jpeg_accelerator" instantiated altera_reset_controller "rst_controller"
+Info: cpu: Starting RTL generation for module 'jpeg_accelerator_NIOS_II_cpu'
+Info: cpu:   Generation command is [exec C:/intelFPGA_lite/18.1/quartus/bin64//eperlcmd.exe -I C:/intelFPGA_lite/18.1/quartus/bin64//perl/lib -I C:/intelfpga_lite/18.1/quartus/sopc_builder/bin/europa -I C:/intelfpga_lite/18.1/quartus/sopc_builder/bin/perl_lib -I C:/intelfpga_lite/18.1/quartus/sopc_builder/bin -I C:/intelfpga_lite/18.1/quartus/../ip/altera/nios2_ip/altera_nios2_gen2/cpu_lib -I C:/intelfpga_lite/18.1/quartus/../ip/altera/nios2_ip/altera_nios2_gen2/nios_lib -I C:/intelfpga_lite/18.1/quartus/../ip/altera/nios2_ip/altera_nios2_gen2 -I C:/intelfpga_lite/18.1/quartus/../ip/altera/nios2_ip/altera_nios2_gen2 -- C:/intelfpga_lite/18.1/quartus/../ip/altera/nios2_ip/altera_nios2_gen2/generate_rtl.epl --name=jpeg_accelerator_NIOS_II_cpu --dir=C:/Users/ortar/AppData/Local/Temp/alt0607_3189425359275181211.dir/0010_cpu_gen/ --quartus_bindir=C:/intelFPGA_lite/18.1/quartus/bin64/ --verilog --config=C:/Users/ortar/AppData/Local/Temp/alt0607_3189425359275181211.dir/0010_cpu_gen//jpeg_accelerator_NIOS_II_cpu_processor_configuration.pl  --do_build_sim=0  ]
+Info: cpu: # 2026.06.03 16:56:39 (*) Starting Nios II generation
+Info: cpu: # 2026.06.03 16:56:39 (*)   Checking for plaintext license.
+Info: cpu: # 2026.06.03 16:56:40 (*)   Couldn't query license setup in Quartus directory C:/intelFPGA_lite/18.1/quartus/bin64/
+Info: cpu: # 2026.06.03 16:56:40 (*)   Defaulting to contents of LM_LICENSE_FILE environment variable
+Info: cpu: # 2026.06.03 16:56:40 (*)   LM_LICENSE_FILE environment variable is empty
+Info: cpu: # 2026.06.03 16:56:40 (*)   Plaintext license not found.
+Info: cpu: # 2026.06.03 16:56:40 (*)   No license required to generate encrypted Nios II/e.
+Info: cpu: # 2026.06.03 16:56:40 (*)   Elaborating CPU configuration settings
+Info: cpu: # 2026.06.03 16:56:40 (*)   Creating all objects for CPU
+Info: cpu: # 2026.06.03 16:56:40 (*)   Generating RTL from CPU objects
+Info: cpu: # 2026.06.03 16:56:40 (*)   Creating plain-text RTL
+Info: cpu: # 2026.06.03 16:56:41 (*) Done Nios II generation
+Info: cpu: Done RTL generation for module 'jpeg_accelerator_NIOS_II_cpu'
+Info: cpu: "NIOS_II" instantiated altera_nios2_gen2_unit "cpu"
+Info: NIOS_II_data_master_translator: "mm_interconnect_0" instantiated altera_merlin_master_translator "NIOS_II_data_master_translator"
+Info: DEBUG_avalon_jtag_slave_translator: "mm_interconnect_0" instantiated altera_merlin_slave_translator "DEBUG_avalon_jtag_slave_translator"
+Info: NIOS_II_data_master_agent: "mm_interconnect_0" instantiated altera_merlin_master_agent "NIOS_II_data_master_agent"
+Info: DEBUG_avalon_jtag_slave_agent: "mm_interconnect_0" instantiated altera_merlin_slave_agent "DEBUG_avalon_jtag_slave_agent"
+Info: DEBUG_avalon_jtag_slave_agent_rsp_fifo: "mm_interconnect_0" instantiated altera_avalon_sc_fifo "DEBUG_avalon_jtag_slave_agent_rsp_fifo"
+Info: router: "mm_interconnect_0" instantiated altera_merlin_router "router"
+Info: router_001: "mm_interconnect_0" instantiated altera_merlin_router "router_001"
+Info: router_002: "mm_interconnect_0" instantiated altera_merlin_router "router_002"
+Info: router_004: "mm_interconnect_0" instantiated altera_merlin_router "router_004"
+Info: cmd_demux: "mm_interconnect_0" instantiated altera_merlin_demultiplexer "cmd_demux"
+Info: cmd_demux_001: "mm_interconnect_0" instantiated altera_merlin_demultiplexer "cmd_demux_001"
+Info: cmd_mux: "mm_interconnect_0" instantiated altera_merlin_multiplexer "cmd_mux"
+Info: cmd_mux_002: "mm_interconnect_0" instantiated altera_merlin_multiplexer "cmd_mux_002"
+Info: Reusing file C:/intelFPGA_lite/18.1/projects/jpeg_accelerator/jpeg_accelerator/synthesis/submodules/altera_merlin_arbitrator.sv
+Info: rsp_demux: "mm_interconnect_0" instantiated altera_merlin_demultiplexer "rsp_demux"
+Info: rsp_mux: "mm_interconnect_0" instantiated altera_merlin_multiplexer "rsp_mux"
+Info: Reusing file C:/intelFPGA_lite/18.1/projects/jpeg_accelerator/jpeg_accelerator/synthesis/submodules/altera_merlin_arbitrator.sv
+Info: rsp_mux_001: "mm_interconnect_0" instantiated altera_merlin_multiplexer "rsp_mux_001"
+Info: Reusing file C:/intelFPGA_lite/18.1/projects/jpeg_accelerator/jpeg_accelerator/synthesis/submodules/altera_merlin_arbitrator.sv
+Info: avalon_st_adapter: "mm_interconnect_0" instantiated altera_avalon_st_adapter "avalon_st_adapter"
+Info: error_adapter_0: "avalon_st_adapter" instantiated error_adapter "error_adapter_0"
+Info: jpeg_accelerator: Done "jpeg_accelerator" with 28 modules, 41 files
+Info: qsys-generate succeeded.
+Info: Finished: Create HDL design files for synthesis

@@ -1,0 +1,324 @@
+/*
+ * jpeg_encoder_no_dpcm.c
+ *
+ * Final corrected version:
+ * - Correct MATLAB-compatible zigzag
+ * - Correct block traversal order
+ * - Correct column-major flattening
+ * - Generates MATLAB .m file
+ */
+
+#include <stdio.h>
+#include "sky_image.h"
+
+#define IMG_W 800
+#define IMG_H 800
+
+#define BLOCK_SIZE 8
+#define BLOCKS_X 100
+#define BLOCKS_Y 100
+#define N_BLOCKS 10000
+
+static const double DCT_C[8][8] = {
+    {0.3535533905932738,0.3535533905932738,0.3535533905932738,0.3535533905932738,0.3535533905932738,0.3535533905932738,0.3535533905932738,0.3535533905932738},
+    {0.4903926402016152,0.4157348061512726,0.2777851165098011,0.0975451610080642,-0.0975451610080641,-0.2777851165098010,-0.4157348061512727,-0.4903926402016152},
+    {0.4619397662556434,0.1913417161825449,-0.1913417161825449,-0.4619397662556434,-0.4619397662556434,-0.1913417161825452,0.1913417161825448,0.4619397662556433},
+    {0.4157348061512726,-0.0975451610080641,-0.4903926402016152,-0.2777851165098011,0.2777851165098009,0.4903926402016153,0.0975451610080644,-0.4157348061512721},
+    {0.3535533905932738,-0.3535533905932737,-0.3535533905932738,0.3535533905932737,0.3535533905932738,-0.3535533905932733,-0.3535533905932736,0.3535533905932733},
+    {0.2777851165098011,-0.4903926402016152,0.0975451610080642,0.4157348061512727,-0.4157348061512726,-0.0975451610080649,0.4903926402016152,-0.2777851165098008},
+    {0.1913417161825449,-0.4619397662556434,0.4619397662556433,-0.1913417161825447,-0.1913417161825450,0.4619397662556437,-0.4619397662556435,0.1913417161825431},
+    {0.0975451610080642,-0.2777851165098011,0.4157348061512727,-0.4903926402016153,0.4903926402016152,-0.4157348061512720,0.2777851165098022,-0.0975451610080625}
+};
+
+/* MATLAB-compatible column-major zigzag */
+static const int ZIGZAG_ORD[64] = {
+     0,  1,  8, 16,  9,  2,  3, 10,
+    17, 24, 32, 25, 18, 11,  4,  5,
+    12, 19, 26, 33, 40, 48, 41, 34,
+    27, 20, 13,  6,  7, 14, 21, 28,
+    35, 42, 49, 56, 57, 50, 43, 36,
+    29, 22, 15, 23, 30, 37, 44, 51,
+    58, 59, 52, 45, 38, 31, 39, 46,
+    53, 60, 61, 54, 47, 55, 62, 63
+};
+
+static int round_to_int(double x)
+{
+    if (x >= 0.0)
+        return (int)(x + 0.5);
+    else
+        return (int)(x - 0.5);
+}
+
+static void append_bit(char *out, int *bit_pos, int max_bits, char bit)
+{
+    if (*bit_pos < max_bits)
+        out[*bit_pos] = bit;
+
+    (*bit_pos)++;
+}
+
+static void append_bits_from_uint(char *out,
+                                  int *bit_pos,
+                                  int max_bits,
+                                  unsigned int value,
+                                  int nbits)
+{
+    int i;
+
+    for (i = nbits - 1; i >= 0; i--) {
+        append_bit(out,
+                   bit_pos,
+                   max_bits,
+                   ((value >> i) & 1U) ? '1' : '0');
+    }
+}
+
+static void golomb_enc_symbol(int symbol,
+                              char *out,
+                              int *bit_pos,
+                              int max_bits)
+{
+    unsigned int cursymbol;
+    unsigned int value;
+    unsigned int pow2M;
+    unsigned int suffix;
+
+    int M;
+    int i;
+
+    if (symbol == 0)
+        cursymbol = 0U;
+    else if (symbol > 0)
+        cursymbol = (unsigned int)(2 * symbol - 1);
+    else
+        cursymbol = (unsigned int)((-2) * symbol);
+
+    value = cursymbol + 1U;
+
+    M = 0;
+    while ((1U << (M + 1)) <= value)
+        M++;
+
+    for (i = 0; i < M; i++)
+        append_bit(out, bit_pos, max_bits, '0');
+
+    append_bit(out, bit_pos, max_bits, '1');
+
+    pow2M = 1U << M;
+    suffix = value - pow2M;
+
+    if (M > 0)
+        append_bits_from_uint(out,
+                              bit_pos,
+                              max_bits,
+                              suffix,
+                              M);
+}
+
+static void dct2_8x8(const double in_block[8][8],
+                     double out_block[8][8])
+{
+    int u,v,x,y;
+    double sum;
+
+    for (u = 0; u < 8; u++) {
+        for (v = 0; v < 8; v++) {
+
+            sum = 0.0;
+
+            for (x = 0; x < 8; x++) {
+                for (y = 0; y < 8; y++) {
+
+                    sum += DCT_C[u][x] *
+                           in_block[x][y] *
+                           DCT_C[v][y];
+                }
+            }
+
+            out_block[u][v] = sum;
+        }
+    }
+}
+
+int imageEncoder_noDPCM_C(const unsigned char image[IMG_H][IMG_W],
+                          double delta,
+                          char *outputBitStream,
+                          int output_max_bits)
+{
+    int block_y, block_x;
+    int x,y,u,v;
+    int k;
+
+    int bit_pos = 0;
+
+    int lastNZArray[N_BLOCKS];
+
+    int quant_col_major[64];
+    int zigzag[64];
+
+    double block[8][8];
+    double dct_block[8][8];
+
+    k = 0;
+
+    /* IMPORTANT: row-first block traversal */
+    for (block_y = 0; block_y < BLOCKS_Y; block_y++) {
+
+        for (block_x = 0; block_x < BLOCKS_X; block_x++) {
+
+            for (x = 0; x < 8; x++) {
+                for (y = 0; y < 8; y++) {
+
+                    int pixel_y = block_y * 8 + x;
+                    int pixel_x = block_x * 8 + y;
+
+                    block[x][y] =
+                        ((double)image[pixel_y][pixel_x] - 128.0)
+                        / 256.0;
+                }
+            }
+
+            dct2_8x8(block, dct_block);
+
+            /* MATLAB column-major flattening */
+            for (v = 0; v < 8; v++) {
+                for (u = 0; u < 8; u++) {
+
+                    int idx = u + 8 * v;
+
+                    quant_col_major[idx] =
+                        round_to_int(dct_block[u][v] / delta);
+                }
+            }
+
+            for (u = 0; u < 64; u++)
+                zigzag[u] = quant_col_major[ZIGZAG_ORD[u]];
+
+            {
+                int last = 1;
+
+                for (u = 63; u >= 0; u--) {
+
+                    if (zigzag[u] != 0) {
+                        last = u + 1;
+                        break;
+                    }
+                }
+
+                lastNZArray[k] = last;
+            }
+
+            for (u = 0; u < lastNZArray[k]; u++) {
+
+                if (zigzag[u] == 0) {
+
+                    append_bit(outputBitStream,
+                               &bit_pos,
+                               output_max_bits,
+                               '1');
+
+                    append_bit(outputBitStream,
+                               &bit_pos,
+                               output_max_bits,
+                               '0');
+                }
+                else {
+
+                    golomb_enc_symbol(zigzag[u],
+                                      outputBitStream,
+                                      &bit_pos,
+                                      output_max_bits);
+                }
+            }
+
+            k++;
+        }
+    }
+
+    for (k = 0; k < N_BLOCKS; k++) {
+
+        append_bits_from_uint(outputBitStream,
+                              &bit_pos,
+                              output_max_bits,
+                              (unsigned int)(lastNZArray[k] - 1),
+                              6);
+    }
+
+    if (bit_pos < output_max_bits)
+        outputBitStream[bit_pos] = '\0';
+    else if (output_max_bits > 0)
+        outputBitStream[output_max_bits - 1] = '\0';
+
+    return bit_pos;
+}
+
+static void save_bitstream_as_m_file(const char *filename,
+                                     const char *varname,
+                                     const char *bitstream,
+                                     int nbits)
+{
+    FILE *f = fopen(filename, "w");
+
+    int i;
+
+    if (f == NULL) {
+        printf("Error opening file\n");
+        return;
+    }
+
+    fprintf(f, "%s = [", varname);
+
+    for (i = 0; i < nbits; i++) {
+
+        fprintf(f, "'%c'", bitstream[i]);
+
+        if (i != nbits - 1)
+            fprintf(f, ", ");
+    }
+
+    fprintf(f, "];\n");
+
+    fclose(f);
+}
+
+int main(void)
+{
+    static unsigned char image_u8[IMG_H][IMG_W];
+
+    static char bitstream[2000000];
+
+    int x,y;
+    int nbits;
+
+    for (y = 0; y < IMG_H; y++) {
+        for (x = 0; x < IMG_W; x++) {
+
+            double v = sky_image[y][x];
+
+            if (v < 0.0) v = 0.0;
+            if (v > 255.0) v = 255.0;
+
+            image_u8[y][x] =
+                (unsigned char)(v + 0.5);
+        }
+    }
+
+    nbits = imageEncoder_noDPCM_C(
+                image_u8,
+                0.01,
+                bitstream,
+                sizeof(bitstream));
+
+    save_bitstream_as_m_file(
+        "encoded_bitstream.m",
+        "outputBitStream",
+        bitstream,
+        nbits);
+
+    printf("Encoding finished.\n");
+    printf("Generated bits: %d\n", nbits);
+    printf("Saved to encoded_bitstream.m\n");
+
+    return 0;
+}

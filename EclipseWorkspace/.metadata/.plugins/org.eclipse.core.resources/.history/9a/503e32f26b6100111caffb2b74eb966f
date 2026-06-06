@@ -1,0 +1,542 @@
+/*
+ * jpeg_encoder_no_dpcm.c
+ *
+ * Standalone C version of the provided MATLAB imageEncoder_noDPCM.m
+ * Target: embedded / FPGA soft-core environment
+ *
+ * No malloc, no printf, no file I/O, no math library calls.
+ * The output bitstream is written into a caller-provided char buffer.
+ *
+ * IMPORTANT:
+ * The MATLAB code calls golomb_enc(), but its implementation was not provided.
+ * This file includes a simple signed Exp-Golomb style encoder as a placeholder.
+ * Replace golomb_enc_symbol() if your MATLAB golomb_enc() uses a different code.
+ */
+
+#include "drivers/inc/altera_avalon_timer.h"
+#include "sys/alt_timestamp.h"
+#include "altera_avalon_timer_regs.h"
+#include <stdio.h>
+#include <inttypes.h>
+#include <stdint.h>
+#include "system.h"
+#include "io.h"
+#include "sky_image_64_u8.h"
+
+#define IMG_W 64
+#define IMG_H 64
+#define BLOCK_SIZE 8
+#define BLOCKS_X 8
+#define BLOCKS_Y 8
+#define N_BLOCKS 64
+#define DCT_N 8
+
+/*
+ * IMPORTANT:
+ * Check system.h and make sure this name is correct.
+ *
+ * It may be something like:
+ *   MVP_ACCELERATOR_AVALON_SLAVE_0_BASE
+ *   MVP_ACCELERATOR_0_BASE
+ *   DCT_ACCELERATOR_0_BASE
+ */
+#define DCT_ACCEL_BASE 0x81028
+
+/*
+ * Avalon-MM register access.
+ *
+ * From Nios II C code, offsets are byte offsets.
+ * Therefore register number n is accessed as offset 4*n.
+ */
+#define DCT_RD(op)          IORD_32DIRECT(DCT_ACCEL_BASE, 4 * (op))
+#define DCT_WR(op, data)    IOWR_32DIRECT(DCT_ACCEL_BASE, 4 * (op), (data))
+
+/*
+ * Accelerator register map.
+ */
+#define OP_ROW0_FIRST4  0
+#define OP_ROW0_LAST4   1
+#define OP_ROW1_FIRST4  2
+#define OP_ROW1_LAST4   3
+#define OP_ROW2_FIRST4  4
+#define OP_ROW2_LAST4   5
+#define OP_ROW3_FIRST4  6
+#define OP_ROW3_LAST4   7
+#define OP_ROW4_FIRST4  8
+#define OP_ROW4_LAST4   9
+#define OP_ROW5_FIRST4  10
+#define OP_ROW5_LAST4   11
+#define OP_ROW6_FIRST4  12
+#define OP_ROW6_LAST4   13
+#define OP_ROW7_FIRST4  14
+#define OP_ROW7_LAST4   15
+
+#define OP_CALC         16
+#define OP_STATUS       16
+
+#define DCT_STATUS_BUSY 0x1
+#define DCT_STATUS_DONE 0x2
+
+#define DCT_STATUS_BUSY 0x1
+#define DCT_STATUS_DONE 0x2
+
+/** Cosine transform matrix compatible with MATLAB-style orthonormal DCT-II.
+ * C[u][x] = alpha(u) * cos(pi * (2*x+1) * u / 16)
+ * alpha(0)=sqrt(1/8), alpha(u)=sqrt(2/8) for u>0
+ */
+static const double DCT_C[8][8] = {
+    {0.3535533905932738,  0.3535533905932738,  0.3535533905932738,  0.3535533905932738,  0.3535533905932738,  0.3535533905932738,  0.3535533905932738,  0.3535533905932738},
+    {0.4903926402016152,  0.4157348061512726,  0.2777851165098011,  0.0975451610080642, -0.0975451610080641, -0.2777851165098010, -0.4157348061512727, -0.4903926402016152},
+    {0.4619397662556434,  0.1913417161825449, -0.1913417161825449, -0.4619397662556434, -0.4619397662556434, -0.1913417161825452,  0.1913417161825448,  0.4619397662556433},
+    {0.4157348061512726, -0.0975451610080641, -0.4903926402016152, -0.2777851165098011,  0.2777851165098009,  0.4903926402016153,  0.0975451610080644, -0.4157348061512721},
+    {0.3535533905932738, -0.3535533905932737, -0.3535533905932738,  0.3535533905932737,  0.3535533905932738, -0.3535533905932733, -0.3535533905932736,  0.3535533905932733},
+    {0.2777851165098011, -0.4903926402016152,  0.0975451610080642,  0.4157348061512727, -0.4157348061512726, -0.0975451610080649,  0.4903926402016152, -0.2777851165098008},
+    {0.1913417161825449, -0.4619397662556434,  0.4619397662556433, -0.1913417161825447, -0.1913417161825450,  0.4619397662556437, -0.4619397662556435,  0.1913417161825431},
+    {0.0975451610080642, -0.2777851165098011,  0.4157348061512727, -0.4903926402016153,  0.4903926402016152, -0.4157348061512720,  0.2777851165098022, -0.0975451610080625}
+};
+
+/** MATLAB linear indexing after reshape(block,64,...) is column-major.
+ * This order is the standard JPEG zigzag converted to MATLAB/C 0-based column-major indices.
+ */
+static const int ZIGZAG_ORD[64] = {
+     0,  1,  8, 16,  9,  2,  3, 10,
+    17, 24, 32, 25, 18, 11,  4,  5,
+    12, 19, 26, 33, 40, 48, 41, 34,
+    27, 20, 13,  6,  7, 14, 21, 28,
+    35, 42, 49, 56, 57, 50, 43, 36,
+    29, 22, 15, 23, 30, 37, 44, 51,
+    58, 59, 52, 45, 38, 31, 39, 46,
+    53, 60, 61, 54, 47, 55, 62, 63
+};
+
+
+
+static inline void timer_start(void)
+{
+    IOWR_ALTERA_AVALON_TIMER_CONTROL(
+        TIMER_0_BASE,
+        ALTERA_AVALON_TIMER_CONTROL_STOP_MSK
+    );
+
+    IOWR_ALTERA_AVALON_TIMER_PERIODL(TIMER_0_BASE, 0xFFFF);
+    IOWR_ALTERA_AVALON_TIMER_PERIODH(TIMER_0_BASE, 0xFFFF);
+
+    IOWR_ALTERA_AVALON_TIMER_CONTROL(
+        TIMER_0_BASE,
+        ALTERA_AVALON_TIMER_CONTROL_CONT_MSK |
+        ALTERA_AVALON_TIMER_CONTROL_START_MSK
+    );
+}
+
+static inline uint32_t timer_read_cycles(void)
+{
+    uint32_t low;
+    uint32_t high;
+
+    IOWR_ALTERA_AVALON_TIMER_SNAPL(TIMER_0_BASE, 0);
+
+    low  = IORD_ALTERA_AVALON_TIMER_SNAPL(TIMER_0_BASE);
+    high = IORD_ALTERA_AVALON_TIMER_SNAPH(TIMER_0_BASE);
+
+    return 0xFFFFFFFFu - ((high << 16) | low);
+}
+
+
+static int round_to_int(double x)
+{
+    if (x >= 0.0) {
+        return (int)(x + 0.5);
+    } else {
+        return (int)(x - 0.5);
+    }
+}
+
+static void append_bit(char *out, int *bit_pos, int max_bits, char bit)
+{
+    if (*bit_pos < max_bits) {
+        out[*bit_pos] = bit;
+    }
+    *bit_pos = *bit_pos + 1;
+}
+
+static void append_bits_from_uint(char *out, int *bit_pos, int max_bits, unsigned int value, int nbits)
+{
+    int i;
+    for (i = nbits - 1; i >= 0; i--) {
+        append_bit(out, bit_pos, max_bits, ((value >> i) & 1U) ? '1' : '0');
+    }
+}
+
+/** Exact C equivalent of the provided MATLAB golomb_enc() for one symbol.
+ *
+ * MATLAB behavior:
+ *   if symbol == 0: cursymbol remains 0
+ *   if symbol > 0 : cursymbol = 2*symbol - 1
+ *   if symbol < 0 : cursymbol = -2*symbol
+ *
+ *   M      = floor(log2(cursymbol + 1))
+ *   prefix = M zeros followed by one '1'
+ *   suffix = binary(cursymbol + 1 - 2^M) using exactly M bits
+ *
+ * In imageEncoder_noDPCM.m, zero coefficients are NOT sent to golomb_enc().
+ * They are manually encoded as "10". This function still supports symbol=0
+ * and would output "1", exactly like golomb_enc(0).
+ */
+static void golomb_enc_symbol(int symbol, char *out, int *bit_pos, int max_bits)
+{
+    unsigned int cursymbol;
+    unsigned int value;
+    unsigned int pow2M;
+    unsigned int suffix;
+    int M;
+    int i;
+
+    if (symbol == 0) {
+        cursymbol = 0U;
+    } else if (symbol > 0) {
+        cursymbol = (unsigned int)(2 * symbol - 1);
+    } else {
+        cursymbol = (unsigned int)((-2) * symbol);
+    }
+
+    value = cursymbol + 1U;
+
+    /* M = floor(log2(value)) without using math.h */
+    M = 0;
+    while ((1U << (M + 1)) <= value) {
+        M++;
+    }
+
+    /* prefix: M zeros followed by 1 */
+    for (i = 0; i < M; i++) {
+        append_bit(out, bit_pos, max_bits, '0');
+    }
+    append_bit(out, bit_pos, max_bits, '1');
+
+    /* suffix: dec2bin(value - 2^M, M) */
+    pow2M = 1U << M;
+    suffix = value - pow2M;
+    if (M > 0) {
+        append_bits_from_uint(out, bit_pos, max_bits, suffix, M);
+    }
+}
+
+static void dct2_8x8(double in_block[8][8], double out_block[8][8])
+{
+    int u, v, x, y;
+    double sum;
+    // load in_block to accelerator (16 write_data)
+    for (u = 0; u < 8; u++) {
+        for (v = 0; v < 8; v++) {
+            sum = 0.0;
+            for (x = 0; x < 8; x++) {
+                for (y = 0; y < 8; y++) {
+                    sum += (DCT_C[u][x] * in_block[x][y]) * DCT_C[v][y];
+                }
+            }
+            out_block[u][v] = sum;
+        // read 4 sums with (1 read_data)
+        }
+    }
+}
+
+static void dct2_8x8_hw(double in_block[8][8],
+                        double out_block[8][8])
+{
+    int r;
+
+    for (r = 0; r < 8; r++) {
+        int8_t p0, p1, p2, p3;
+        int8_t p4, p5, p6, p7;
+
+        uint32_t first4;
+        uint32_t last4;
+
+        p0 = (int8_t)round_to_int(in_block[r][0]);
+        p1 = (int8_t)round_to_int(in_block[r][1]);
+        p2 = (int8_t)round_to_int(in_block[r][2]);
+        p3 = (int8_t)round_to_int(in_block[r][3]);
+
+        p4 = (int8_t)round_to_int(in_block[r][4]);
+        p5 = (int8_t)round_to_int(in_block[r][5]);
+        p6 = (int8_t)round_to_int(in_block[r][6]);
+        p7 = (int8_t)round_to_int(in_block[r][7]);
+
+        first4 =
+            ((uint32_t)(uint8_t)p0       |
+            ((uint32_t)(uint8_t)p1 << 8)  |
+            ((uint32_t)(uint8_t)p2 << 16) |
+            ((uint32_t)(uint8_t)p3 << 24));
+
+        last4 =
+            ((uint32_t)(uint8_t)p4       |
+            ((uint32_t)(uint8_t)p5 << 8) |
+            ((uint32_t)(uint8_t)p6 << 16) |
+            ((uint32_t)(uint8_t)p7 << 24));
+
+        DCT_WR(2 * r,     first4);
+        DCT_WR(2 * r + 1, last4);
+    }
+
+    DCT_WR(OP_CALC, 1);
+
+//    while ((DCT_RD(OP_STATUS) & DCT_STATUS_DONE) == 0) {
+//        /* wait */
+//    }
+
+    for (r = 0; r < 8; r++) {
+        uint32_t first4;
+        uint32_t last4;
+
+        first4 = DCT_RD(2 * r);
+        last4  = DCT_RD(2 * r + 1);
+
+        out_block[r][0] = (double)((int8_t)( first4        & 0xFF))*256;
+        out_block[r][1] = (double)((int8_t)((first4 >> 8)  & 0xFF))*256;
+        out_block[r][2] = (double)((int8_t)((first4 >> 16) & 0xFF))*256;
+        out_block[r][3] = (double)((int8_t)((first4 >> 24) & 0xFF))*256;
+
+        out_block[r][4] = (double)((int8_t)( last4        & 0xFF))*256;
+        out_block[r][5] = (double)((int8_t)((last4 >> 8)  & 0xFF))*256;
+        out_block[r][6] = (double)((int8_t)((last4 >> 16) & 0xFF))*256;
+        out_block[r][7] = (double)((int8_t)((last4 >> 24) & 0xFF))*256;
+    }
+}
+
+/*
+ * image input:
+ *   image[y][x] should contain grayscale pixel values in [0,255].
+ *
+ * outputBitStream:
+ *   Caller must provide a large enough char buffer.
+ *   The function writes '0'/'1' characters only.
+ *   If space remains, it appends '\0' for convenience.
+ *
+ * return value:
+ *   Number of generated bits, even if output_max_bits was too small.
+ */
+int imageEncoder_noDPCM_C(const unsigned char image[IMG_H][IMG_W],
+                          double delta,
+                          char *outputBitStream,
+                          int output_max_bits)
+{
+    int block_y, block_x;
+    int x, y, u, v;
+    int k;
+    int bit_pos = 0;
+    int lastNZArray[N_BLOCKS];
+    int quant_col_major[64];
+    int zigzag[64];
+    double block[8][8];
+    double dct_block[8][8];
+
+    /* First pass: encode Golomb coefficients and store lastNZ per block. */
+    k = 0;
+
+    for (block_x = 0; block_x < BLOCKS_X; block_x++) {
+        for (block_y = 0; block_y < BLOCKS_Y; block_y++) {
+
+            /*
+             * MATLAB equivalent:
+             * image = (image - 128) / 256;
+             * ImageBlocks(:,:,i,j)
+             */
+            for (x = 0; x < 8; x++) {
+                for (y = 0; y < 8; y++) {
+                    int pixel_y = block_y * 8 + x;
+                    int pixel_x = block_x * 8 + y;
+
+                    block[x][y] =
+                        ((double)image[pixel_y][pixel_x] - 128.0) / 256.0;
+                }
+            }
+
+            /*
+             * Debug print: first input block only.
+             * This shows the values that should effectively be sent to the HW
+             * before the /256 normalization.
+             */
+            if (block_x == 0 && block_y == 0) {
+                int rr, cc;
+
+                printf("Input block sent to HW, scaled back by 256:\n");
+
+                for (rr = 0; rr < 8; rr++) {
+                    for (cc = 0; cc < 8; cc++) {
+                        printf("%4d ",
+                               round_to_int(block[rr][cc] * 256.0));
+                    }
+                    printf("\n");
+                }
+
+                printf("\n");
+            }
+
+            /*
+             * Run DCT in hardware.
+             */
+            dct2_8x8_hw(block, dct_block);
+
+            /*
+             * Debug print: first DCT block only.
+             */
+            if (block_x == 0 && block_y == 0) {
+                int rr, cc;
+
+                printf("DCT block returned from HW:\n");
+
+                for (rr = 0; rr < 8; rr++) {
+                    for (cc = 0; cc < 8; cc++) {
+                        printf("%8d ",
+                               round_to_int(dct_block[rr][cc]));
+                    }
+                    printf("\n");
+                }
+
+                printf("\n");
+
+                printf("Quantized DCT block, delta = %.3f:\n", delta);
+
+                for (rr = 0; rr < 8; rr++) {
+                    for (cc = 0; cc < 8; cc++) {
+                        printf("%8d ",
+                               round_to_int(dct_block[rr][cc] / delta));
+                    }
+                    printf("\n");
+                }
+
+                printf("\n");
+            }
+
+            /*
+             * MATLAB reshape is column-major:
+             * index = row + 8 * col
+             */
+            for (v = 0; v < 8; v++) {
+                for (u = 0; u < 8; u++) {
+                    int idx = u + 8 * v;
+                    quant_col_major[idx] =
+                        round_to_int(dct_block[u][v] / delta);
+                }
+            }
+
+            /*
+             * Zigzag reorder.
+             */
+            for (u = 0; u < 64; u++) {
+                zigzag[u] = quant_col_major[ZIGZAG_ORD[u]];
+            }
+
+            /*
+             * Find last nonzero, MATLAB 1-based behavior.
+             */
+            {
+                int last = 1;
+
+                for (u = 63; u >= 0; u--) {
+                    if (zigzag[u] != 0) {
+                        last = u + 1;
+                        break;
+                    }
+                }
+
+                lastNZArray[k] = last;
+            }
+
+            /*
+             * Entropy coding for symbols 1:lastNZ.
+             * MATLAB: if coefficient == 0, output "10".
+             */
+            for (u = 0; u < lastNZArray[k]; u++) {
+                if (zigzag[u] == 0) {
+                    append_bit(outputBitStream,
+                               &bit_pos,
+                               output_max_bits,
+                               '1');
+
+                    append_bit(outputBitStream,
+                               &bit_pos,
+                               output_max_bits,
+                               '0');
+                } else {
+                    golomb_enc_symbol(zigzag[u],
+                                      outputBitStream,
+                                      &bit_pos,
+                                      output_max_bits);
+                }
+            }
+
+            k++;
+        }
+    }
+
+    /*
+     * Second pass: append lastNZ_bit_stream.
+     * MATLAB: dec2bin(lastNZArray - 1, 6), then transpose + reshape.
+     */
+    for (k = 0; k < N_BLOCKS; k++) {
+        append_bits_from_uint(outputBitStream,
+                              &bit_pos,
+                              output_max_bits,
+                              (unsigned int)(lastNZArray[k] - 1),
+                              6);
+    }
+
+    /*
+     * Null terminate for convenience.
+     */
+    if (bit_pos < output_max_bits) {
+        outputBitStream[bit_pos] = '\0';
+    } else if (output_max_bits > 0) {
+        outputBitStream[output_max_bits - 1] = '\0';
+    }
+
+    return bit_pos;
+}
+
+
+
+
+
+int main(void)
+{
+	timer_start();
+
+
+
+    static char bitstream[100000];
+
+    int nbits;
+    //t_start = alt_timestamp();
+
+
+    uint32_t t_start = timer_read_cycles();
+
+    nbits = imageEncoder_noDPCM_C(
+        sky_image_64,
+        0.1,
+        bitstream,
+        sizeof(bitstream)
+    );
+    uint32_t t_end = timer_read_cycles();
+
+    uint32_t cpu_cycles = t_end - t_start;
+
+
+
+    printf("Encoding finished.\n");
+
+    printf("cpu encoding time: %" PRIu32 "\n",cpu_cycles);
+    printf("t_end: %" PRIu32 "\n",t_end);
+    printf("t_start: %" PRIu32 "\n",t_start);
+
+    printf("Generated bits: %d\n", nbits);
+
+    for (int i = 0; i<10; i++){
+        printf("Generated bit at %d: %c\n",i, bitstream[i]);
+
+
+    }
+
+    return 0;
+}
