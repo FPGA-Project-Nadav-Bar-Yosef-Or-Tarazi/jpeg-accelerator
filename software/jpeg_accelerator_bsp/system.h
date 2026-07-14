@@ -4,7 +4,7 @@
  * Machine generated for CPU 'NIOS_II' in SOPC Builder design 'jpeg_accelerator'
  * SOPC Builder design path: ../../jpeg_accelerator.sopcinfo
  *
- * Generated: Tue May 19 19:18:34 IDT 2026
+ * Generated: Tue Jun 09 17:39:51 IDT 2026
  */
 
 /*
@@ -134,7 +134,7 @@
  */
 
 #define ALT_MODULE_CLASS_DEBUG altera_avalon_jtag_uart
-#define DEBUG_BASE 0x81020
+#define DEBUG_BASE 0x81030
 #define DEBUG_IRQ 0
 #define DEBUG_IRQ_INTERRUPT_CONTROLLER_ID 0
 #define DEBUG_NAME "/dev/DEBUG"
@@ -151,11 +151,11 @@
  *
  */
 
-#define __ACCELERATOR
 #define __ALTERA_AVALON_JTAG_UART
 #define __ALTERA_AVALON_ONCHIP_MEMORY2
 #define __ALTERA_AVALON_TIMER
 #define __ALTERA_NIOS2_GEN2
+#define __JPEG_ACCELERATOR
 
 
 /*
@@ -203,38 +203,24 @@
 #define ALT_NUM_INTERNAL_INTERRUPT_CONTROLLERS 1
 #define ALT_NUM_INTERRUPT_CONTROLLERS 1
 #define ALT_STDERR "/dev/DEBUG"
-#define ALT_STDERR_BASE 0x81020
+#define ALT_STDERR_BASE 0x81030
 #define ALT_STDERR_DEV DEBUG
 #define ALT_STDERR_IS_JTAG_UART
 #define ALT_STDERR_PRESENT
 #define ALT_STDERR_TYPE "altera_avalon_jtag_uart"
 #define ALT_STDIN "/dev/DEBUG"
-#define ALT_STDIN_BASE 0x81020
+#define ALT_STDIN_BASE 0x81030
 #define ALT_STDIN_DEV DEBUG
 #define ALT_STDIN_IS_JTAG_UART
 #define ALT_STDIN_PRESENT
 #define ALT_STDIN_TYPE "altera_avalon_jtag_uart"
 #define ALT_STDOUT "/dev/DEBUG"
-#define ALT_STDOUT_BASE 0x81020
+#define ALT_STDOUT_BASE 0x81030
 #define ALT_STDOUT_DEV DEBUG
 #define ALT_STDOUT_IS_JTAG_UART
 #define ALT_STDOUT_PRESENT
 #define ALT_STDOUT_TYPE "altera_avalon_jtag_uart"
 #define ALT_SYSTEM_NAME "jpeg_accelerator"
-
-
-/*
- * accelerator_0 configuration
- *
- */
-
-#define ACCELERATOR_0_BASE 0x81028
-#define ACCELERATOR_0_IRQ -1
-#define ACCELERATOR_0_IRQ_INTERRUPT_CONTROLLER_ID -1
-#define ACCELERATOR_0_NAME "/dev/accelerator_0"
-#define ACCELERATOR_0_SPAN 4
-#define ACCELERATOR_0_TYPE "accelerator"
-#define ALT_MODULE_CLASS_accelerator_0 accelerator
 
 
 /*
@@ -246,6 +232,20 @@
 #define ALT_MAX_FD 4
 #define ALT_SYS_CLK none
 #define ALT_TIMESTAMP_CLK none
+
+
+/*
+ * jpeg_accelerator_0 configuration
+ *
+ */
+
+#define ALT_MODULE_CLASS_jpeg_accelerator_0 jpeg_accelerator
+#define JPEG_ACCELERATOR_0_BASE 0x81020
+#define JPEG_ACCELERATOR_0_IRQ -1
+#define JPEG_ACCELERATOR_0_IRQ_INTERRUPT_CONTROLLER_ID -1
+#define JPEG_ACCELERATOR_0_NAME "/dev/jpeg_accelerator_0"
+#define JPEG_ACCELERATOR_0_SPAN 16
+#define JPEG_ACCELERATOR_0_TYPE "jpeg_accelerator"
 
 
 /*

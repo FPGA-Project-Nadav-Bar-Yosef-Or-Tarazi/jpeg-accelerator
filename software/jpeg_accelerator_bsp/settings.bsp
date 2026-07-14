@@ -2,8 +2,8 @@
 <sch:Settings xmlns:sch="http://www.altera.com/embeddedsw/bsp/schema">
         <BspType>hal</BspType>
         <BspVersion>default</BspVersion>
-        <BspGeneratedTimeStamp>06/06/2026 09:08:09</BspGeneratedTimeStamp>
-        <BspGeneratedUnixTimeStamp>1780726089211</BspGeneratedUnixTimeStamp>
+        <BspGeneratedTimeStamp>30/06/2026 16:31:40</BspGeneratedTimeStamp>
+        <BspGeneratedUnixTimeStamp>1782826300178</BspGeneratedUnixTimeStamp>
         <BspGeneratedLocation>C:\intelFPGA_lite\18.1\projects\jpeg_accelerator\software\jpeg_accelerator_bsp</BspGeneratedLocation>
         <BspSettingsFile>settings.bsp</BspSettingsFile>
         <SopcDesignFile>..\..\jpeg_accelerator.sopcinfo</SopcDesignFile>
@@ -734,7 +734,7 @@
                 <SettingName>hal.enable_small_c_library</SettingName>
                 <Identifier>none</Identifier>
                 <Type>Boolean</Type>
-                <Value>1</Value>
+                <Value>0</Value>
                 <DefaultValue>0</DefaultValue>
                 <DestinationFile>public_mk_define</DestinationFile>
                 <Description>Causes the small newlib (C library) to be used. This reduces code and data footprint at the expense of reduced functionality. Several newlib features are removed such as floating-point support in printf(), stdin input routines, and buffered I/O. The small C library is not compatible with Micrium MicroC/OS-II. If true, adds -msmallc to ALT_LDFLAGS in public.mk.</Description>
@@ -911,16 +911,16 @@
                 <attributes>timer</attributes>
         </MemoryMap>
         <MemoryMap>
-                <slaveDescriptor>DEBUG</slaveDescriptor>
-                <addressRange>0x00081020 - 0x00081027</addressRange>
-                <addressSpan>8</addressSpan>
-                <attributes>printable</attributes>
+                <slaveDescriptor>jpeg_accelerator_0</slaveDescriptor>
+                <addressRange>0x00081020 - 0x0008102F</addressRange>
+                <addressSpan>16</addressSpan>
+                <attributes/>
         </MemoryMap>
         <MemoryMap>
-                <slaveDescriptor>accelerator_0</slaveDescriptor>
-                <addressRange>0x00081028 - 0x0008102B</addressRange>
-                <addressSpan>4</addressSpan>
-                <attributes/>
+                <slaveDescriptor>DEBUG</slaveDescriptor>
+                <addressRange>0x00081030 - 0x00081037</addressRange>
+                <addressSpan>8</addressSpan>
+                <attributes>printable</attributes>
         </MemoryMap>
         <LinkerSection>
                 <sectionName>.text</sectionName>

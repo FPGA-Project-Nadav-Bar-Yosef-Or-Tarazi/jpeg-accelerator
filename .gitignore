@@ -1,0 +1,35 @@
+# Quartus generated files
+db/
+incremental_db/
+output_files/
+.qsys_edit/
+*.flock
+*.qws
+*.rpt
+*.summary
+*.done
+*.jdi
+*.sof
+*.pof
+*.sld
+*.smsg
+
+# Generated Platform Designer files
+jpeg_accelerator/
+
+# Eclipse workspace metadata
+EclipseWorkspace/.metadata/
+
+# Nios II build products
+software/*/obj/
+software/**/*.elf
+software/**/*.map
+software/**/*.objdump
+software/*_bsp/libhal_bsp.a
+software/*_bsp/obj/
+software/*_bsp/.force_rebuild_all
+
+# IDE and backup files
+.idea/
+*.bak
+*~
